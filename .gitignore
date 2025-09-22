@@ -1,0 +1,41 @@
+# Python 시스템 파일
+__pycache__/
+*.pyc
+
+# 데이터 파일 (용량이 크므로 제외)
+*.wav
+*.mp4
+
+# 학습된 모델 파일 (코드를 공유하는 것이 목적일 경우 제외)
+*.pkl
+*.ivector
+
+# macOS 시스템 파일
+.DS_Store
+
+# 가상환경/에디터/캐시
+.venv/
+venv/
+.vscode/
+.idea/
+.ipynb_checkpoints/
+.cache/
+cache/
+
+# 로그
+*.log
+logs/
+
+# DB / 인덱스 아티팩트
+xvectors.sqlite3
+*.sqlite3
+faiss.index
+*.index
+
+# 모델 아티팩트(이전 형식 포함)
+models/*.xvector
+*.xvector
+
+# 사용자 녹음 디렉터리(깃킵 제외)
+user_voices/*
+!user_voices/.gitkeep
