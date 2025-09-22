@@ -62,7 +62,7 @@ print("\nFAISS 인덱스를 사용하여 검색합니다...")
 
 # --- 2. 사용자 목소리 분석 ---
 # 사용자 전용 디렉터리 생성 및 최신 파일 자동 선택
-USER_DIR = "user_voices"
+USER_DIR = os.path.join("data", "user", "user_voices")
 os.makedirs(USER_DIR, exist_ok=True)
 
 user_files = sorted(glob.glob(os.path.join(USER_DIR, "*.wav")), key=os.path.getmtime)

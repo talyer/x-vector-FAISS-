@@ -11,9 +11,9 @@ ECAPA-TDNN 기반 x-vector를 추출하여 SQLite(DB)에 저장하고, FAISS로 
 - `scripts/`: 보조 스크립트(`compare_voices.py`, `test.py`, `tubeVoice.py` 등)
 - `models/`: 예전 평균 `.xvector` 파일(현재 파이프라인에서는 미사용)
 
-디렉터리 구조(권장)
-- `iu_songs/`, `younha_songs/`, `sungsikyung_songs/`: 각 가수의 학습용 `.wav`
-- `user_voices/`: 사용자 녹음 `.wav` (최신 파일 자동 선택)
+권장 디렉터리 구조
+- `data/train/iu_songs/`, `data/train/younha_songs/`, `data/train/sungsikyung_songs/`: 학습용 `.wav`
+- `data/user/user_voices/`: 사용자 녹음 `.wav` (최신 파일 자동 선택)
 
 ## 환경 준비
 
@@ -30,10 +30,10 @@ conda install -c pytorch faiss-cpu
 ## 데이터 배치
 
 - 학습 데이터(.wav)를 아래 폴더에 넣습니다.
-  - `iu_songs/`
-  - `younha_songs/`
-  - `sungsikyung_songs/`
-- 추가 가수 예: `taeyeon_songs/` 폴더를 만들고 `train.py`의 `SINGER_DIRS` 리스트에 추가
+  - `data/train/iu_songs/`
+  - `data/train/younha_songs/`
+  - `data/train/sungsikyung_songs/`
+- 추가 가수 예: `data/train/taeyeon_songs/` 폴더를 만들고 `train.py`의 `SINGER_DIRS` 리스트에 추가
 - 파일 형식: `.wav` 권장
 
 ## 학습(DB 저장) & 인덱스 생성
@@ -53,12 +53,12 @@ python train.py
 --> 'iu' 저장 완료: 11개 x-vector
 ...
 FAISS 인덱스를 생성합니다...
-FAISS 인덱스 생성 완료: C:\\Users\\<USER>\\AppData\\Local\\Temp\\faiss.index (vectors=29, dim=192)
+FAISS 인덱스 생성 완료: C:\Users\<USER>\AppData\Local\Temp\faiss.index (vectors=29, dim=192)
 ```
 
 ## 추론(사용자 음성 분석)
 
-1) `user_voices/` 폴더에 사용자의 녹음 `.wav`를 넣습니다. 최신 파일이 자동 선택됩니다.
+1) `data/user/user_voices/` 폴더에 사용자의 녹음 `.wav`를 넣습니다. 최신 파일이 자동 선택됩니다.
 2) 실행
 ```bash
 python run_app.py
@@ -77,7 +77,7 @@ python run_app.py
   - A) `speechbrain.inference.EncoderClassifier`를 사용합니다(코드 반영됨). 최초 실행 시 모델 다운로드로 시간이 소요될 수 있습니다.
 
 - Q) OneDrive 경로에서 느립니다.
-  - A) 가능하면 로컬 경로(예: `C:\\work\\TEST`)로 옮겨 실행하세요.
+  - A) 가능하면 로컬 경로(예: `C:\work\TEST`)로 옮겨 실행하세요.
 
 ## 개발 메모
 

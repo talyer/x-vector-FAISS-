@@ -66,7 +66,11 @@ print("모델 로딩 완료!")
 init_db()
 
 # --- 각 가수별 x-vector 추출 및 DB 저장 ---
-SINGER_DIRS = ["iu_songs", "younha_songs", "sungsikyung_songs"] # 학습시킬 모든 가수 폴더
+SINGER_DIRS = [
+    os.path.join("data", "train", "iu_songs"),
+    os.path.join("data", "train", "younha_songs"),
+    os.path.join("data", "train", "sungsikyung_songs"),
+] # 학습시킬 모든 가수 폴더
 print("\n각 가수별 x-vector 추출 및 DB 저장을 시작합니다...")
 
 total_saved = 0
