@@ -36,6 +36,9 @@ faiss.index
 models/*.xvector
 *.xvector
 
-# 사용자 녹음 디렉터리(깃킵 제외)
-user_voices/*
-!user_voices/.gitkeep
+# 사용자 녹음 디렉터리(깃킵 제외) - data 구조 반영
+data/user/user_voices/*
+!data/user/user_voices/.gitkeep
+
+# 데이터 디렉터리 내 .gitkeep 허용
+!data/**/.gitkeep
