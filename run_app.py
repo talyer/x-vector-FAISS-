@@ -7,6 +7,7 @@ from torchaudio.transforms import Resample
 from faiss_index import search_top_k
 from db_utils import get_singer_by_id
 import glob
+import joblib
 
 # --- 특징 추출 함수 ---
 def get_xvector(file_path, model):
@@ -75,26 +76,59 @@ print(f"\n사용자 목소리 '{USER_VOICE_PATH}'를 분석합니다...")
 user_xvector = get_xvector(USER_VOICE_PATH, classifier)
 
 if user_xvector is not None:
-    # --- 3. FAISS Top-K 검색 ---
-    scores, ids = search_top_k(user_xvector, k=5)
+    # --- 3. models 디렉터리의 가수별 x-vector와 직접 비교 ---
+    print("\nmodels 디렉터리의 가수별 x-vector와 비교합니다...")
     
-    # id → singer 매핑 및 집계
-    singer_to_best = {}
-    for score, row_id in zip(scores, ids):
-        if row_id == -1:
-            continue
-        singer = get_singer_by_id(int(row_id))
-        if not singer:
-            continue
-        pct = float(score) * 100.0
-        if singer not in singer_to_best or singer_to_best[singer] < pct:
-            singer_to_best[singer] = pct
-
-    if singer_to_best:
-        best_match_singer = max(singer_to_best, key=singer_to_best.get)
-        print("\n--- 최종 분석 결과 (FAISS/ECAPA) ---")
-        for singer, pct in sorted(singer_to_best.items(), key=lambda x: x[1], reverse=True):
-            print(f"'{singer}' 모델과의 유사도: {pct:.2f}%")
-        print(f"\n==> 최종 판정: 가장 유사한 가수는 '{best_match_singer}' 입니다!")
+    # 가수별 x-vector 요약 파일 로드
+    summary_path = os.path.join("models", "singer_vectors_summary.pkl")
+    if os.path.exists(summary_path):
+        singer_vectors = joblib.load(summary_path)
+        print(f"로드된 가수: {list(singer_vectors.keys())}")
+        
+        # 코사인 유사도 계산
+        singer_similarities = {}
+        for singer_name, singer_xvector in singer_vectors.items():
+            # L2 정규화
+            user_norm = user_xvector / (np.linalg.norm(user_xvector) + 1e-10)
+            singer_norm = singer_xvector / (np.linalg.norm(singer_xvector) + 1e-10)
+            
+            # 코사인 유사도 계산
+            similarity = np.dot(user_norm, singer_norm)
+            singer_similarities[singer_name] = similarity * 100.0  # 퍼센트로 변환
+        
+        if singer_similarities:
+            best_match_singer = max(singer_similarities, key=singer_similarities.get)
+            print("\n--- 최종 분석 결과 (직접 x-vector 비교) ---")
+            for singer, similarity in sorted(singer_similarities.items(), key=lambda x: x[1], reverse=True):
+                print(f"'{singer}' 모델과의 유사도: {similarity:.2f}%")
+            print(f"\n==> 최종 판정: 가장 유사한 가수는 '{best_match_singer}' 입니다!")
+        else:
+            print("가수별 x-vector를 찾을 수 없습니다.")
     else:
-        print("결과를 계산할 수 없습니다.")
+        print(f"가수별 x-vector 요약 파일을 찾을 수 없습니다: {summary_path}")
+        print("먼저 train.py를 실행하여 가수별 x-vector를 생성하세요.")
+        
+        # 기존 FAISS 방식으로 폴백
+        print("\nFAISS 방식으로 폴백합니다...")
+        scores, ids = search_top_k(user_xvector, k=5)
+        
+        # id → singer 매핑 및 집계
+        singer_to_best = {}
+        for score, row_id in zip(scores, ids):
+            if row_id == -1:
+                continue
+            singer = get_singer_by_id(int(row_id))
+            if not singer:
+                continue
+            pct = float(score) * 100.0
+            if singer not in singer_to_best or singer_to_best[singer] < pct:
+                singer_to_best[singer] = pct
+
+        if singer_to_best:
+            best_match_singer = max(singer_to_best, key=singer_to_best.get)
+            print("\n--- 최종 분석 결과 (FAISS/ECAPA) ---")
+            for singer, pct in sorted(singer_to_best.items(), key=lambda x: x[1], reverse=True):
+                print(f"'{singer}' 모델과의 유사도: {pct:.2f}%")
+            print(f"\n==> 최종 판정: 가장 유사한 가수는 '{best_match_singer}' 입니다!")
+        else:
+            print("결과를 계산할 수 없습니다.")

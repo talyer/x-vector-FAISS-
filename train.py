@@ -9,6 +9,7 @@ import torchaudio
 from torchaudio.transforms import Resample
 from db_utils import init_db, upsert_xvector
 from faiss_index import build_index
+import joblib
 
 # --- 특징 추출 함수 ---
 def get_xvector(file_path, model):
@@ -65,6 +66,9 @@ print("모델 로딩 완료!")
 # --- DB 초기화 ---
 init_db()
 
+# --- 모델 디렉터리 생성 ---
+os.makedirs("models", exist_ok=True)
+
 # --- 각 가수별 x-vector 추출 및 DB 저장 ---
 SINGER_DIRS = [
     os.path.join("data", "train", "iu_songs"),
@@ -74,6 +78,8 @@ SINGER_DIRS = [
 print("\n각 가수별 x-vector 추출 및 DB 저장을 시작합니다...")
 
 total_saved = 0
+singer_vectors = {}  # 가수별 x-vector 저장용
+
 for singer_dir in SINGER_DIRS:
     singer_name = os.path.basename(singer_dir).replace("_songs", "")
     print(f"--> '{singer_name}' 학습 중...")
@@ -85,12 +91,26 @@ for singer_dir in SINGER_DIRS:
         continue
 
     saved_count = 0
+    singer_xvectors = []  # 해당 가수의 모든 x-vector
+    
     for file_path in singer_files:
         xvector = get_xvector(file_path, classifier)
         if xvector is None:
             continue
         upsert_xvector(singer=singer_name, file_path=file_path, vector=xvector)
+        singer_xvectors.append(xvector)
         saved_count += 1
+    
+    # 가수별 평균 x-vector 계산 및 저장
+    if singer_xvectors:
+        avg_xvector = np.mean(np.stack(singer_xvectors, axis=0), axis=0).astype(np.float32)
+        singer_vectors[singer_name] = avg_xvector
+        
+        # models 디렉터리에 가수별 x-vector 저장
+        model_path = os.path.join("models", f"{singer_name}_xvector.pkl")
+        joblib.dump(avg_xvector, model_path)
+        print(f"  '{singer_name}' 평균 x-vector 저장: {model_path}")
+    
     print(f"'{singer_name}' 저장 완료: {saved_count}개 x-vector")
     total_saved += saved_count
 
@@ -100,5 +120,11 @@ else:
     print("\nFAISS 인덱스를 생성합니다...")
     index_path, n, dim = build_index()
     print(f"FAISS 인덱스 생성 완료: {index_path} (vectors={n}, dim={dim})")
+    
+    # 가수별 x-vector 요약 정보 저장
+    if singer_vectors:
+        summary_path = os.path.join("models", "singer_vectors_summary.pkl")
+        joblib.dump(singer_vectors, summary_path)
+        print(f"가수별 x-vector 요약 저장: {summary_path}")
 
 print("\n작업이 완료되었습니다.")

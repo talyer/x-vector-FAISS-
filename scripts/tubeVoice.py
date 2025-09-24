@@ -2,7 +2,7 @@ import yt_dlp
 import os
 
 # 1. 다운로드할 유튜브 주소
-url = 'https://www.youtube.com/watch?v=5JE2bl2yv1Y'
+url = 'https://www.youtube.com/watch?v=gC2di-uvEcw' 
 # 2. yt-dlp 옵션 설정
 ydl_opts = {
     # 'bestaudio' -> 최고 음질의 오디오를 선택
